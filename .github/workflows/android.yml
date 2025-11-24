@@ -36,5 +36,30 @@ jobs:
         distribution: 'temurin'
         java-version: '17'
 
-    - name: Install Android SDK
-      uses: android-actions
+    - name: Install Android SDK manually
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget tar unzip
+        wget https://dl.google.com/android/repository/commandlinetools-linux-10406996_latest.zip -O cmdline-tools.zip
+        mkdir -p $HOME/android-sdk/cmdline-tools
+        unzip cmdline-tools.zip -d $HOME/android-sdk/cmdline-tools
+        echo "ANDROID_HOME=$HOME/android-sdk" >> $GITHUB_ENV
+        echo "PATH=$ANDROID_HOME/cmdline-tools/bin:$ANDROID_HOME/platform-tools:$PATH" >> $GITHUB_ENV
+
+    - name: Add Capacitor Android
+      run: |
+        npm install @capacitor/core @capacitor/cli
+        npx cap init blockbench com.blockbench.app --npm-client npm --skip-questions
+        npx cap add android
+        npx cap copy
+
+    - name: Build APK (debug)
+      run: |
+        cd android
+        ./gradlew assembleDebug
+
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: blockbench-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
