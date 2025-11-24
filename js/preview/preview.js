@@ -2583,3 +2583,35 @@ Object.assign(window, {
 	updateShading,
 	updateCubeHighlights,
 });
+// --- Multitouch support ---
+let lastDistance = null;
+let lastAngle = null;
+
+Preview.canvas.addEventListener("touchmove", (e) => {
+  if (e.touches.length === 2) {
+    let dx = e.touches[0].clientX - e.touches[1].clientX;
+    let dy = e.touches[0].clientY - e.touches[1].clientY;
+    let distance = Math.sqrt(dx*dx + dy*dy);
+
+    if (lastDistance) {
+      if (distance > lastDistance) {
+        Preview.zoom(1.05);
+      } else {
+        Preview.zoom(0.95);
+      }
+    }
+    lastDistance = distance;
+
+    let angle = Math.atan2(dy, dx);
+    if (lastAngle !== null) {
+      let delta = angle - lastAngle;
+      Preview.rotateView(delta * 50);
+    }
+    lastAngle = angle;
+  }
+});
+
+Preview.canvas.addEventListener("touchend", () => {
+  lastDistance = null;
+  lastAngle = null;
+});
