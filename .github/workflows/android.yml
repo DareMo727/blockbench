@@ -1,0 +1,51 @@
+name: Build Blockbench APK
+
+on:
+  push:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repo
+      uses: actions/checkout@v3
+
+    - name: Set up Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+
+    - name: Install dependencies
+      run: npm install
+
+    - name: Build web version
+      run: npm run build
+
+    - name: Set up JDK
+      uses: actions/setup-java@v3
+      with:
+        distribution: 'temurin'
+        java-version: '17'
+
+    - name: Install Android SDK
+      uses: android-actions/setup-android@v2
+
+    - name: Add Capacitor Android
+      run: |
+        npm install @capacitor/core @capacitor/cli
+        npx cap init blockbench com.blockbench.app
+        npx cap add android
+        npx cap copy
+
+    - name: Build APK
+      run: |
+        cd android
+        ./gradlew assembleDebug
+
+    - name: Upload APK
+      uses: actions/upload-artifact@v3
+      with:
+        name: blockbench-apk
+        path: android/app/build/outputs/apk/debug/app-debug.apk
